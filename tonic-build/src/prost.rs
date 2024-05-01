@@ -30,6 +30,7 @@ pub fn configure() -> Builder {
         boxed: Vec::new(),
         btree_map: None,
         bytes: None,
+        string: None,
         server_attributes: Attributes::default(),
         client_attributes: Attributes::default(),
         proto_path: "super".to_string(),
@@ -291,6 +292,7 @@ pub struct Builder {
     pub(crate) boxed: Vec<String>,
     pub(crate) btree_map: Option<Vec<String>>,
     pub(crate) bytes: Option<Vec<String>>,
+    pub(crate) string: Option<Vec<String>>,
     pub(crate) server_attributes: Attributes,
     pub(crate) client_attributes: Attributes,
     pub(crate) proto_path: String,
@@ -445,6 +447,26 @@ impl Builder {
         S: AsRef<str>,
     {
         self.bytes = Some(
+            paths
+                .into_iter()
+                .map(|path| path.as_ref().to_string())
+                .collect(),
+        );
+        self
+    }
+
+    /// Configure the code generator to generate Rust `bytestring::ByteString` fields for Protobuf `string`
+    /// type fields.
+    ///
+    /// Passed directly to `prost_build::Config.string`.
+    ///
+    /// Note: previous configured paths for `string` will be cleared.
+    pub fn string<I, S>(mut self, paths: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        self.string = Some(
             paths
                 .into_iter()
                 .map(|path| path.as_ref().to_string())
@@ -634,6 +656,9 @@ impl Builder {
         }
         if let Some(ref paths) = self.bytes {
             config.bytes(paths);
+        }
+        if let Some(ref paths) = self.string {
+            config.string(paths);
         }
         if self.compile_well_known_types {
             config.compile_well_known_types();
